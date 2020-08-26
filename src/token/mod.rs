@@ -6,10 +6,20 @@ pub enum Token {
     // Identifiers + literals
     Ident(String),
     Int(i64),
+    Bool(bool),
 
     // Operators
-    Assign, // =
-    Plus,   // +
+    Assign,   // =
+    Plus,     // +
+    Minus,    // -
+    Bang,     // !
+    Slash,    // /
+    Asterisk, // *
+
+    Lt,  // <
+    Gt,  // >
+    Eq,  // ==
+    Neq, // !=
 
     // Delimiters
     Comma,     // ,
@@ -22,4 +32,7 @@ pub enum Token {
     // Reserved Keywords
     Func,
     Let,
+    If,
+    Else,
+    Return,
 }
