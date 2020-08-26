@@ -1,5 +1,5 @@
 [package]
-name = "rust-monkey"
+name = "monkey"
 version = "0.1.0"
 authors = ["Philip Brown <pwbrown24@gmail.com>"]
 edition = "2018"
