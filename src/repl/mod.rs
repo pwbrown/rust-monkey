@@ -1,4 +1,5 @@
 use crate::lexer::Lexer;
+use crate::parser::Parser;
 use std::io;
 use std::io::prelude::*;
 
@@ -13,11 +14,23 @@ pub fn start() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
 
-        let lex = Lexer::new(&input);
-
-        // Print each token from the input
-        for tok in lex {
-            println!("{:?}", tok);
+        // Parse input
+        let mut parser = Parser::new(Lexer::new(&input));
+        let program = parser.parse();
+        if parser.errors().len() > 0 {
+            print_parser_errors(&parser);
+            continue;
         }
+
+        // Print parsed program output
+        println!("{}", program);
+    }
+}
+
+fn print_parser_errors(parser: &Parser) {
+    println!("Whoops! We ran into some monkey business here!");
+    println!(" parser errors:");
+    for err in parser.errors() {
+        println!("    {}", err);
     }
 }

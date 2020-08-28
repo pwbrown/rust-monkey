@@ -30,41 +30,42 @@ fn check_parser_errors(parser: &Parser) {
 
 #[test]
 fn test_let_statements() {
-    let program = parse_program(
-        "
-        let x = 5;
-        let y = 10;
-        let foobar = 838383;
-    ",
-    );
-
-    assert_eq!(
-        program.0,
-        vec![
+    let tests = vec![
+        (
+            "let x = 5;",
             Stmt::Let(String::from("x"), Expr::Literal(Literal::Int(5))),
-            Stmt::Let(String::from("y"), Expr::Literal(Literal::Int(10))),
-            Stmt::Let(String::from("foobar"), Expr::Literal(Literal::Int(838383))),
-        ],
-    );
+        ),
+        (
+            "let y = true;",
+            Stmt::Let(String::from("y"), Expr::Literal(Literal::Bool(true))),
+        ),
+        (
+            "let foobar = y;",
+            Stmt::Let(String::from("foobar"), Expr::Ident(String::from("y"))),
+        ),
+    ];
+
+    for (input, exp_ast) in tests {
+        let program = parse_program(input);
+        assert_eq!(program.0, vec![exp_ast]);
+    }
 }
 
 #[test]
 fn test_return_statements() {
-    let program = parse_program(
-        "
-        return 5;
-        return 10;
-        return 993322;
-    ",
-    );
-    assert_eq!(
-        program.0,
-        vec![
-            Stmt::Return(Expr::Literal(Literal::Int(5))),
-            Stmt::Return(Expr::Literal(Literal::Int(10))),
-            Stmt::Return(Expr::Literal(Literal::Int(993322))),
-        ],
-    );
+    let tests = vec![
+        ("return 5;", Stmt::Return(Expr::Literal(Literal::Int(5)))),
+        (
+            "return true;",
+            Stmt::Return(Expr::Literal(Literal::Bool(true))),
+        ),
+        ("return y;", Stmt::Return(Expr::Ident(String::from("y")))),
+    ];
+
+    for (input, exp_ast) in tests {
+        let program = parse_program(input);
+        assert_eq!(program.0, vec![exp_ast]);
+    }
 }
 
 #[test]
@@ -466,6 +467,88 @@ fn test_operator_precedence_parsing() {
                     Infix::Eq,
                     Box::new(Expr::Literal(Literal::Bool(true))),
                 )),
+            )),
+        ),
+        // Adding Call Expressions
+        (
+            "a + add(b * c) + d",
+            "((a + add((b * c))) + d)",
+            Stmt::Expr(Expr::Infix(
+                Box::new(Expr::Infix(
+                    Box::new(Expr::Ident(String::from("a"))),
+                    Infix::Plus,
+                    Box::new(Expr::Call(
+                        Box::new(Expr::Ident(String::from("add"))),
+                        vec![Expr::Infix(
+                            Box::new(Expr::Ident(String::from("b"))),
+                            Infix::Multiply,
+                            Box::new(Expr::Ident(String::from("c"))),
+                        )],
+                    )),
+                )),
+                Infix::Plus,
+                Box::new(Expr::Ident(String::from("d"))),
+            )),
+        ),
+        (
+            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+            Stmt::Expr(Expr::Call(
+                Box::new(Expr::Ident(String::from("add"))),
+                vec![
+                    Expr::Ident(String::from("a")),
+                    Expr::Ident(String::from("b")),
+                    Expr::Literal(Literal::Int(1)),
+                    Expr::Infix(
+                        Box::new(Expr::Literal(Literal::Int(2))),
+                        Infix::Multiply,
+                        Box::new(Expr::Literal(Literal::Int(3))),
+                    ),
+                    Expr::Infix(
+                        Box::new(Expr::Literal(Literal::Int(4))),
+                        Infix::Plus,
+                        Box::new(Expr::Literal(Literal::Int(5))),
+                    ),
+                    Expr::Call(
+                        Box::new(Expr::Ident(String::from("add"))),
+                        vec![
+                            Expr::Literal(Literal::Int(6)),
+                            Expr::Infix(
+                                Box::new(Expr::Literal(Literal::Int(7))),
+                                Infix::Multiply,
+                                Box::new(Expr::Literal(Literal::Int(8))),
+                            ),
+                        ],
+                    ),
+                ],
+            )),
+        ),
+        (
+            "add(a + b + c * d / f + g)",
+            "add((((a + b) + ((c * d) / f)) + g))",
+            Stmt::Expr(Expr::Call(
+                Box::new(Expr::Ident(String::from("add"))),
+                vec![Expr::Infix(
+                    Box::new(Expr::Infix(
+                        Box::new(Expr::Infix(
+                            Box::new(Expr::Ident(String::from("a"))),
+                            Infix::Plus,
+                            Box::new(Expr::Ident(String::from("b"))),
+                        )),
+                        Infix::Plus,
+                        Box::new(Expr::Infix(
+                            Box::new(Expr::Infix(
+                                Box::new(Expr::Ident(String::from("c"))),
+                                Infix::Multiply,
+                                Box::new(Expr::Ident(String::from("d"))),
+                            )),
+                            Infix::Divide,
+                            Box::new(Expr::Ident(String::from("f"))),
+                        )),
+                    )),
+                    Infix::Plus,
+                    Box::new(Expr::Ident(String::from("g"))),
+                )],
             )),
         ),
     ];
