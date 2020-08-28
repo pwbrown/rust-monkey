@@ -1,3 +1,4 @@
+use crate::evaluator;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use std::io;
@@ -22,8 +23,8 @@ pub fn start() {
             continue;
         }
 
-        // Print parsed program output
-        println!("{}", program);
+        // Evaluate input
+        println!("{}", evaluator::eval(program));
     }
 }
 
