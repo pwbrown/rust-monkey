@@ -96,3 +96,59 @@ fn test_if_else_expressions() {
         assert_eq!(eval(input), result);
     }
 }
+
+#[test]
+fn test_return_statements() {
+    let tests = vec![
+        ("return 10;", 10),
+        ("return 10; 9;", 10),
+        ("return 2 * 5; 9;", 10),
+        ("9; return 2 * 5; 9;", 10),
+        (
+            "
+            if (10 > 1) {
+                if (10 > 1) {
+                    return 10;
+                }
+                return 1;
+            }
+            ",
+            10,
+        ),
+    ];
+
+    for (input, result) in tests {
+        assert_eq!(eval(input), Object::Int(result));
+    }
+}
+
+#[test]
+fn test_error_handling() {
+    let tests = vec![
+        ("5 + true;", "type mismatch: INTEGER + BOOLEAN"),
+        ("5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"),
+        ("-true", "unknown operator: -BOOLEAN"),
+        ("true + false", "unknown operator: BOOLEAN + BOOLEAN"),
+        ("5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"),
+        (
+            "if (10 > 1) { true + false; }",
+            "unknown operator: BOOLEAN + BOOLEAN",
+        ),
+        (
+            "
+            if (10 > 1) {
+                if (10 > 1) {
+                    return true + false;
+                }
+
+                return 1;
+            }
+            ",
+            "unknown operator: BOOLEAN + BOOLEAN",
+        ),
+    ];
+
+    for (input, msg) in tests {
+        assert_eq!(eval(input), Object::Error(String::from(msg)));
+    }
+}

@@ -9,6 +9,27 @@ pub fn eval(program: Program) -> Object {
 
     for stmt in program.0 {
         result = eval_stmt(stmt);
+        if let Object::ReturnValue(val) = result {
+            return *val;
+        } else if let Object::Error(msg) = result {
+            return Object::Error(msg);
+        }
+    }
+
+    result
+}
+
+// Same as eval except it does not unwrap ReturnValue
+fn eval_block_stmt(block: BlockStmt) -> Object {
+    let mut result = Object::Null;
+
+    for stmt in block.0 {
+        result = eval_stmt(stmt);
+        if let Object::ReturnValue(val) = result {
+            return Object::ReturnValue(val);
+        } else if let Object::Error(msg) = result {
+            return Object::Error(msg);
+        }
     }
 
     result
@@ -17,6 +38,7 @@ pub fn eval(program: Program) -> Object {
 fn eval_stmt(stmt: Stmt) -> Object {
     match stmt {
         Stmt::Expr(expr) => eval_expr(expr),
+        Stmt::Return(expr) => Object::ReturnValue(Box::new(eval_expr(expr))),
         _ => Object::Null,
     }
 }
@@ -57,7 +79,7 @@ fn eval_not_prefix_expr(right: Object) -> Object {
 fn eval_negative_prefix_expr(right: Object) -> Object {
     match right {
         Object::Int(int) => Object::Int(-int),
-        _ => Object::Null,
+        _ => Object::Error(format!("unknown operator: -{}", right)),
     }
 }
 
@@ -67,17 +89,22 @@ fn eval_infix_expr(operator: Infix, left: Object, right: Object) -> Object {
             if let Object::Int(right) = right {
                 eval_integer_infix_expr(operator, left, right)
             } else {
-                Object::Null
+                Object::Error(format!(
+                    "type mismatch: {} {} {}",
+                    Object::Int(left),
+                    operator,
+                    right
+                ))
             }
         }
         Object::Bool(left) => {
             if let Object::Bool(right) = right {
                 eval_boolean_infix_expr(operator, left, right)
             } else {
-                Object::Null
+                Object::Error(format!("type mismatch: {} {} {}", left, operator, right))
             }
         }
-        _ => Object::Null,
+        _ => Object::Error(format!("unknown operator: {} {} {}", left, operator, right)),
     }
 }
 
@@ -98,15 +125,20 @@ fn eval_boolean_infix_expr(operator: Infix, left: bool, right: bool) -> Object {
     match operator {
         Infix::Eq => Object::Bool(left == right),
         Infix::Neq => Object::Bool(left != right),
-        _ => Object::Null,
+        _ => Object::Error(format!(
+            "unknown operator: {} {} {}",
+            Object::Bool(left),
+            operator,
+            Object::Bool(right)
+        )),
     }
 }
 
 fn eval_if_expr(condition: Expr, consequence: BlockStmt, alternative: Option<BlockStmt>) -> Object {
     if is_truthy(eval_expr(condition)) {
-        eval(consequence)
+        eval_block_stmt(consequence)
     } else if let Some(alternative) = alternative {
-        eval(alternative)
+        eval_block_stmt(alternative)
     } else {
         Object::Null
     }
