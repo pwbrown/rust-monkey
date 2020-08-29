@@ -4,7 +4,7 @@ use std::fmt;
 pub type Program = BlockStmt;
 
 // *********************** BLOCK *******************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BlockStmt(pub Vec<Stmt>);
 
 impl fmt::Display for BlockStmt {
@@ -23,7 +23,7 @@ impl fmt::Display for BlockStmt {
 }
 
 // ************************** STATEMENT **********************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
     Let(String, Expr), // let my_var = 1 + 2;
     Return(Expr),      // return 1 + 2;
@@ -41,7 +41,7 @@ impl fmt::Display for Stmt {
 }
 
 // ************************** EXPRESSION **********************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Ident(String),                               // my_var
     Literal(Literal),                            // 10
@@ -76,7 +76,7 @@ impl fmt::Display for Expr {
 }
 
 // ************************** LITERAL **********************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     Int(i64),
     Bool(bool),
@@ -92,7 +92,7 @@ impl fmt::Display for Literal {
 }
 
 // ************************ PREFIX ***********************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Prefix {
     Not,      // !
     Negative, // -
@@ -118,7 +118,7 @@ impl fmt::Display for Prefix {
 }
 
 // ************************ INFIX ***********************
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Infix {
     Plus,     // +
     Minus,    // -

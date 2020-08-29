@@ -23,11 +23,10 @@ impl Evaluator {
         let mut result = Object::Undefined;
 
         for stmt in program.0 {
-            result = self.eval_stmt(stmt);
-            if let Object::ReturnValue(val) = result {
-                return *val;
-            } else if let Object::Error(msg) = result {
-                return Object::Error(msg);
+            match self.eval_stmt(stmt) {
+                Object::ReturnValue(val) => return *val,
+                Object::Error(msg) => return Object::Error(msg),
+                obj => result = obj,
             }
         }
 
@@ -39,11 +38,10 @@ impl Evaluator {
         let mut result = Object::Undefined;
 
         for stmt in block.0 {
-            result = self.eval_stmt(stmt);
-            if let Object::ReturnValue(val) = result {
-                return Object::ReturnValue(val);
-            } else if let Object::Error(msg) = result {
-                return Object::Error(msg);
+            match self.eval_stmt(stmt) {
+                Object::ReturnValue(val) => return Object::ReturnValue(val),
+                Object::Error(msg) => return Object::Error(msg),
+                obj => result = obj,
             }
         }
 
@@ -75,7 +73,8 @@ impl Evaluator {
             }
             Expr::If(cond, cons, alt) => self.eval_if_expr(*cond, cons, alt),
             Expr::Ident(name) => self.eval_identifier(&name),
-            _ => Object::Undefined,
+            Expr::Func(params, body) => Object::Func(params, body, Rc::clone(&self.env)),
+            Expr::Call(func, args) => self.eval_call_expr(*func, args),
         }
     }
 
@@ -183,6 +182,41 @@ impl Evaluator {
             Some(value) => value,
             None => Object::Error(format!("identifier not found: {}", name)),
         }
+    }
+
+    fn eval_call_expr(&self, func: Expr, args: Vec<Expr>) -> Object {
+        // Evaluate function
+        let (params, body, env) = match self.eval_expr(func) {
+            Object::Func(params, body, env) => (params, body, env),
+            Object::Error(msg) => return Object::Error(msg),
+            _ => return Object::Undefined,
+        };
+        // Evaluate arguments
+        let args = args
+            .iter()
+            .map(|expr| self.eval_expr(expr.clone()))
+            .collect::<Vec<_>>();
+        if args.len() == 1 && self.is_error(&args[0]) {
+            return args[0].clone();
+        }
+        if params.len() != args.len() {
+            return Object::Error(format!(
+                "wrong number of arguments: {} expected but got {}",
+                params.len(),
+                args.len()
+            ));
+        }
+
+        let mut scoped_env = Env::new_with_outer(Rc::clone(&env));
+        for (ident, val) in params.iter().zip(args.iter()) {
+            scoped_env.set(String::from(ident), val);
+        }
+
+        let evaluator = Evaluator::new(Rc::new(RefCell::new(scoped_env)));
+
+        let result = evaluator.eval(body);
+
+        result
     }
 
     fn is_truthy(&self, obj: Object) -> bool {

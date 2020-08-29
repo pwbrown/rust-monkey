@@ -1,3 +1,4 @@
+use crate::ast::*;
 use crate::evaluator::env::Env;
 use crate::evaluator::object::Object;
 use crate::evaluator::Evaluator;
@@ -172,4 +173,79 @@ fn test_let_statements() {
     for (input, result) in tests {
         assert_eq!(eval(input), Object::Int(result));
     }
+}
+
+#[test]
+fn test_function_object() {
+    let tests = vec![(
+        "fn(x) { x + 2; };",
+        vec![String::from("x")],
+        vec![Stmt::Expr(Expr::Infix(
+            Box::new(Expr::Ident(String::from("x"))),
+            Infix::Plus,
+            Box::new(Expr::Literal(Literal::Int(2))),
+        ))],
+    )];
+
+    for (input, exp_params, exp_body) in tests {
+        let obj = eval(input);
+        match obj {
+            Object::Func(params, body, _) => {
+                assert_eq!(params, exp_params);
+                assert_eq!(body, BlockStmt(exp_body));
+            }
+            _ => panic!("Expected a Function Object"),
+        }
+    }
+}
+
+#[test]
+fn test_function_application() {
+    let tests = vec![
+        ("let identity = fn(x) { x; }; identity(5);", 5),
+        ("let identity = fn(x) { return x; }; identity(5);", 5),
+        ("let double = fn(x) { x * 2; }; double(5);", 10),
+        ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+        ("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+        ("fn(x) { x; }(5)", 5),
+        ("let rate = 5; let mult = fn(x) { x * rate }; mult(5);", 25),
+    ];
+
+    for (input, result) in tests {
+        assert_eq!(eval(input), Object::Int(result));
+    }
+}
+
+#[test]
+fn test_enclosing_envs() {
+    let input = "
+        let first = 10;
+        let second = 10;
+        let third = 10;
+        
+        let ourFunction = fn(first) {
+            let second = 20;
+        
+            first + second + third;
+        };
+        
+        ourFunction(20) + first + second;
+    ";
+
+    assert_eq!(eval(input), Object::Int(70));
+}
+
+#[test]
+fn test_closures() {
+    let input = "
+        let newAdder = fn(x) {
+            fn(y) { x + y; };
+        };
+        
+        let addTwo = newAdder(2);
+
+        addTwo(2);
+    ";
+
+    assert_eq!(eval(input), Object::Int(4));
 }

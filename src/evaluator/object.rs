@@ -1,22 +1,28 @@
+use crate::ast::BlockStmt;
+use crate::evaluator::env::Env;
+use std::cell::RefCell;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
-    Undefined,
     Int(i64),
     Bool(bool),
     ReturnValue(Box<Object>),
+    Func(Vec<String>, BlockStmt, Rc<RefCell<Env>>),
     Error(String),
+    Undefined,
 }
 
 impl Object {
     pub fn get_type(&self) -> String {
         match self {
-            Object::Undefined => String::from("UNDEFINED"),
             Object::Int(_) => String::from("INTEGER"),
             Object::Bool(_) => String::from("BOOLEAN"),
             Object::ReturnValue(val) => val.get_type(),
-            _ => String::from("UNKNOWN"),
+            Object::Func(_, _, _) => String::from("FUNCTION"),
+            Object::Error(_) => String::from("ERROR"),
+            Object::Undefined => String::from("UNDEFINED"),
         }
     }
 }
@@ -24,11 +30,14 @@ impl Object {
 impl fmt::Display for Object {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Object::Undefined => write!(f, "undefined"),
             Object::Int(num) => write!(f, "{}", num),
             Object::Bool(boolean) => write!(f, "{}", boolean),
             Object::ReturnValue(val) => write!(f, "{}", *val),
+            Object::Func(params, body, _) => {
+                write!(f, "fn({}) {{\n{}\n}}", params.join(", "), body)
+            }
             Object::Error(msg) => write!(f, "{}", msg),
+            Object::Undefined => write!(f, "undefined"),
         }
     }
 }
