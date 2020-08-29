@@ -90,10 +90,10 @@ fn test_eval_bang_operator() {
 fn test_if_else_expressions() {
     let tests = vec![
         ("if (true) { 10 }", Object::Int(10)),
-        ("if (false) { 10 }", Object::Null),
+        ("if (false) { 10 }", Object::Undefined),
         ("if (1) { 10 }", Object::Int(10)),
         ("if (1 < 2) { 10 }", Object::Int(10)),
-        ("if (1 > 2) { 10 }", Object::Null),
+        ("if (1 > 2) { 10 }", Object::Undefined),
         ("if (1 > 2) { 10 } else { 20 }", Object::Int(20)),
         ("if (1 < 2) { 10 } else { 20 }", Object::Int(10)),
     ];
@@ -152,7 +152,7 @@ fn test_error_handling() {
             ",
             "unknown operator: BOOLEAN + BOOLEAN",
         ),
-        // ("foobar", "identifier not found: foobar"),
+        ("foobar", "identifier not found: foobar"),
     ];
 
     for (input, msg) in tests {
@@ -160,16 +160,16 @@ fn test_error_handling() {
     }
 }
 
-// #[test]
-// fn test_let_statements() {
-//     let tests = vec![
-//         ("let a = 5; a;", 5),
-//         ("let a = 5 * 5; a;", 25),
-//         ("let a = 5; let b = a; b;", 5),
-//         ("let a = 5; let b = a; let c = a + b + 5", 15),
-//     ];
+#[test]
+fn test_let_statements() {
+    let tests = vec![
+        ("let a = 5; a;", 5),
+        ("let a = 5 * 5; a;", 25),
+        ("let a = 5; let b = a; b;", 5),
+        ("let a = 5; let b = a; let c = a + b + 5; c;", 15),
+    ];
 
-//     for (input, result) in tests {
-//         assert_eq!(eval(input), Object::Int(result));
-//     }
-// }
+    for (input, result) in tests {
+        assert_eq!(eval(input), Object::Int(result));
+    }
+}

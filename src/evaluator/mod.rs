@@ -20,7 +20,7 @@ impl Evaluator {
     }
 
     pub fn eval(&self, program: Program) -> Object {
-        let mut result = Object::Null;
+        let mut result = Object::Undefined;
 
         for stmt in program.0 {
             result = self.eval_stmt(stmt);
@@ -36,7 +36,7 @@ impl Evaluator {
 
     // Same as eval except it does not unwrap ReturnValue
     fn eval_block_stmt(&self, block: BlockStmt) -> Object {
-        let mut result = Object::Null;
+        let mut result = Object::Undefined;
 
         for stmt in block.0 {
             result = self.eval_stmt(stmt);
@@ -52,7 +52,15 @@ impl Evaluator {
 
     fn eval_stmt(&self, stmt: Stmt) -> Object {
         match stmt {
-            Stmt::Let(_, expr) => self.eval_expr(expr),
+            Stmt::Let(ident, expr) => {
+                let value = self.eval_expr(expr);
+                if self.is_error(&value) {
+                    value
+                } else {
+                    self.env.borrow_mut().set(ident, &value);
+                    Object::Undefined
+                }
+            }
             Stmt::Expr(expr) => self.eval_expr(expr),
             Stmt::Return(expr) => Object::ReturnValue(Box::new(self.eval_expr(expr))),
         }
@@ -66,7 +74,8 @@ impl Evaluator {
                 self.eval_infix_expr(op, self.eval_expr(*left), self.eval_expr(*right))
             }
             Expr::If(cond, cons, alt) => self.eval_if_expr(*cond, cons, alt),
-            _ => Object::Null,
+            Expr::Ident(name) => self.eval_identifier(&name),
+            _ => Object::Undefined,
         }
     }
 
@@ -88,7 +97,7 @@ impl Evaluator {
         match right {
             Object::Bool(true) => Object::Bool(false),
             Object::Bool(false) => Object::Bool(true),
-            Object::Null => Object::Bool(true),
+            Object::Undefined => Object::Bool(true),
             _ => Object::Bool(false),
         }
     }
@@ -96,7 +105,7 @@ impl Evaluator {
     fn eval_negative_prefix_expr(&self, right: Object) -> Object {
         match right {
             Object::Int(int) => Object::Int(-int),
-            _ => Object::Error(format!("unknown operator: -{}", right)),
+            _ => Object::Error(format!("unknown operator: -{}", right.get_type())),
         }
     }
 
@@ -107,10 +116,9 @@ impl Evaluator {
                     self.eval_integer_infix_expr(operator, left, right)
                 } else {
                     Object::Error(format!(
-                        "type mismatch: {} {} {}",
-                        Object::Int(left),
+                        "type mismatch: INTEGER {} {}",
                         operator,
-                        right
+                        right.get_type()
                     ))
                 }
             }
@@ -118,10 +126,19 @@ impl Evaluator {
                 if let Object::Bool(right) = right {
                     self.eval_boolean_infix_expr(operator, left, right)
                 } else {
-                    Object::Error(format!("type mismatch: {} {} {}", left, operator, right))
+                    Object::Error(format!(
+                        "type mismatch: BOOLEAN {} {}",
+                        operator,
+                        right.get_type()
+                    ))
                 }
             }
-            _ => Object::Error(format!("unknown operator: {} {} {}", left, operator, right)),
+            _ => Object::Error(format!(
+                "unknown operator: {} {} {}",
+                left.get_type(),
+                operator,
+                right.get_type()
+            )),
         }
     }
 
@@ -142,12 +159,7 @@ impl Evaluator {
         match operator {
             Infix::Eq => Object::Bool(left == right),
             Infix::Neq => Object::Bool(left != right),
-            _ => Object::Error(format!(
-                "unknown operator: {} {} {}",
-                Object::Bool(left),
-                operator,
-                Object::Bool(right)
-            )),
+            _ => Object::Error(format!("unknown operator: BOOLEAN {} BOOLEAN", operator,)),
         }
     }
 
@@ -162,14 +174,28 @@ impl Evaluator {
         } else if let Some(alternative) = alternative {
             self.eval_block_stmt(alternative)
         } else {
-            Object::Null
+            Object::Undefined
+        }
+    }
+
+    fn eval_identifier(&self, name: &str) -> Object {
+        match self.env.borrow_mut().get(String::from(name)) {
+            Some(value) => value,
+            None => Object::Error(format!("identifier not found: {}", name)),
         }
     }
 
     fn is_truthy(&self, obj: Object) -> bool {
         match obj {
-            Object::Null | Object::Bool(false) => false,
+            Object::Undefined | Object::Bool(false) => false,
             _ => true,
+        }
+    }
+
+    fn is_error(&self, obj: &Object) -> bool {
+        match obj {
+            Object::Error(_) => true,
+            _ => false,
         }
     }
 }
