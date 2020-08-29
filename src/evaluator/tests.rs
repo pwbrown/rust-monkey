@@ -1,13 +1,19 @@
-use crate::evaluator;
+use crate::evaluator::env::Env;
+use crate::evaluator::object::Object;
+use crate::evaluator::Evaluator;
 use crate::lexer::Lexer;
-use crate::object::Object;
 use crate::parser::Parser;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 // ********************** UTILITIES **************************
 
 // Parses a program given an input string
 fn eval(input: &str) -> Object {
-    evaluator::eval(Parser::new(Lexer::new(input)).parse())
+    let env = Rc::new(RefCell::new(Env::new()));
+    let evaluator = Evaluator::new(env);
+    let program = Parser::new(Lexer::new(input)).parse();
+    evaluator.eval(program)
 }
 
 #[test]
@@ -146,9 +152,24 @@ fn test_error_handling() {
             ",
             "unknown operator: BOOLEAN + BOOLEAN",
         ),
+        // ("foobar", "identifier not found: foobar"),
     ];
 
     for (input, msg) in tests {
         assert_eq!(eval(input), Object::Error(String::from(msg)));
     }
 }
+
+// #[test]
+// fn test_let_statements() {
+//     let tests = vec![
+//         ("let a = 5; a;", 5),
+//         ("let a = 5 * 5; a;", 25),
+//         ("let a = 5; let b = a; b;", 5),
+//         ("let a = 5; let b = a; let c = a + b + 5", 15),
+//     ];
+
+//     for (input, result) in tests {
+//         assert_eq!(eval(input), Object::Int(result));
+//     }
+// }
