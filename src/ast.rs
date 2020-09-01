@@ -80,6 +80,7 @@ impl fmt::Display for Expr {
 pub enum Literal {
     Int(i64),
     Bool(bool),
+    String(String),
 }
 
 impl fmt::Display for Literal {
@@ -87,6 +88,7 @@ impl fmt::Display for Literal {
         match self {
             Literal::Int(num) => write!(f, "{}", num),
             Literal::Bool(boolean) => write!(f, "{}", boolean),
+            Literal::String(string) => write!(f, "\"{}\"", string),
         }
     }
 }

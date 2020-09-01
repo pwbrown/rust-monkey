@@ -128,6 +128,7 @@ impl<'a> Parser<'a> {
             Token::Ident(_) => self.parse_ident_expr(),
             Token::Int(_) => self.parse_integer_literal_expr(),
             Token::Bool(_) => self.parse_boolean_literal_expr(),
+            Token::String(_) => self.parse_string_literal_expr(),
             Token::Lparen => self.parse_grouped_expr(),
             Token::If => self.parse_if_expr(),
             Token::Func => self.parse_function_literal_expression(),
@@ -177,6 +178,13 @@ impl<'a> Parser<'a> {
     fn parse_boolean_literal_expr(&self) -> Option<Expr> {
         if let Token::Bool(boolean) = self.curr_token {
             return Some(Expr::Literal(Literal::Bool(boolean)));
+        }
+        None
+    }
+
+    fn parse_string_literal_expr(&self) -> Option<Expr> {
+        if let Token::String(string) = &self.curr_token {
+            return Some(Expr::Literal(Literal::String(String::from(string))));
         }
         None
     }

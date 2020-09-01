@@ -43,6 +43,18 @@ fn test_eval_integer_expression() {
 }
 
 #[test]
+fn test_eval_string_literal_expression() {
+    let input = "\"Hello World!\"";
+    assert_eq!(eval(input), Object::String(String::from("Hello World!")));
+}
+
+#[test]
+fn test_eval_string_concatenation() {
+    let input = "\"Hello\" + \" \" + \"World!\"";
+    assert_eq!(eval(input), Object::String(String::from("Hello World!")));
+}
+
+#[test]
 fn test_eval_boolean_expression() {
     let tests = vec![
         ("true", true),
@@ -154,6 +166,7 @@ fn test_error_handling() {
             "unknown operator: BOOLEAN + BOOLEAN",
         ),
         ("foobar", "identifier not found: foobar"),
+        ("\"Hello\" - \"World\"", "unknown operator: STRING - STRING"),
     ];
 
     for (input, msg) in tests {

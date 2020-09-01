@@ -32,6 +32,7 @@ impl<'a> Lexer<'a> {
             '<' => Token::Lt,
             '=' => self.if_peek('=', Token::Eq, Token::Assign),
             '!' => self.if_peek('=', Token::Neq, Token::Bang),
+            '"' => self.read_string(),
             _ => {
                 if is_letter(self.curr()) {
                     return self.read_ident();
@@ -82,6 +83,17 @@ impl<'a> Lexer<'a> {
             self.bump();
         }
         Token::Int(num.parse::<i64>().unwrap())
+    }
+
+    // Reads in the next string by consuming characters
+    fn read_string(&mut self) -> Token {
+        let mut string = String::new();
+        self.bump();
+        while self.curr() != '"' && self.curr() != EOF_CHAR {
+            string.push(self.curr());
+            self.bump();
+        }
+        Token::String(string)
     }
 
     // Bumps to the next char in the iterator

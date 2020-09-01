@@ -23,6 +23,8 @@ fn test_next_token() {
 
         10 == 10;
         10 != 9;
+        \"foobar\";
+        \"foo bar\";
     ";
 
     let tests = vec![
@@ -113,6 +115,12 @@ fn test_next_token() {
         Token::Int(10),
         Token::Neq,
         Token::Int(9),
+        Token::Semicolon,
+        // "foobar";
+        Token::String(String::from("foobar")),
+        Token::Semicolon,
+        // "foo bar";
+        Token::String(String::from("foo bar")),
         Token::Semicolon,
         // END
         Token::Eof,

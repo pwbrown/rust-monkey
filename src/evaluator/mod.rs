@@ -82,6 +82,7 @@ impl Evaluator {
         match literal {
             Literal::Int(int) => Object::Int(int),
             Literal::Bool(boolean) => Object::Bool(boolean),
+            Literal::String(string) => Object::String(string),
         }
     }
 
@@ -132,6 +133,17 @@ impl Evaluator {
                     ))
                 }
             }
+            Object::String(left) => {
+                if let Object::String(right) = right {
+                    self.eval_string_infix_expr(operator, left, right)
+                } else {
+                    Object::Error(format!(
+                        "type mismatch: STRING {} {}",
+                        operator,
+                        right.get_type(),
+                    ))
+                }
+            }
             _ => Object::Error(format!(
                 "unknown operator: {} {} {}",
                 left.get_type(),
@@ -158,8 +170,16 @@ impl Evaluator {
         match operator {
             Infix::Eq => Object::Bool(left == right),
             Infix::Neq => Object::Bool(left != right),
-            _ => Object::Error(format!("unknown operator: BOOLEAN {} BOOLEAN", operator,)),
+            _ => Object::Error(format!("unknown operator: BOOLEAN {} BOOLEAN", operator)),
         }
+    }
+
+    fn eval_string_infix_expr(&self, operator: Infix, mut left: String, right: String) -> Object {
+        if let Infix::Plus = operator {
+            left.push_str(&right);
+            return Object::String(left);
+        }
+        Object::Error(format!("unknown operator: STRING {} STRING", operator))
     }
 
     fn eval_if_expr(

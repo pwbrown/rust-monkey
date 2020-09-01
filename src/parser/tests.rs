@@ -96,6 +96,17 @@ fn test_boolean_literal_expression() {
 }
 
 #[test]
+fn test_string_literal_expression() {
+    let program = parse_program("\"hello world\"");
+    assert_eq!(
+        program.0,
+        vec![Stmt::Expr(Expr::Literal(Literal::String(String::from(
+            "hello world"
+        )))),]
+    );
+}
+
+#[test]
 fn test_prefix_expressions() {
     let tests = vec![
         (

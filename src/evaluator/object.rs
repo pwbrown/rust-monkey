@@ -8,6 +8,7 @@ use std::rc::Rc;
 pub enum Object {
     Int(i64),
     Bool(bool),
+    String(String),
     ReturnValue(Box<Object>),
     Func(Vec<String>, BlockStmt, Rc<RefCell<Env>>),
     Error(String),
@@ -19,6 +20,7 @@ impl Object {
         match self {
             Object::Int(_) => String::from("INTEGER"),
             Object::Bool(_) => String::from("BOOLEAN"),
+            Object::String(_) => String::from("STRING"),
             Object::ReturnValue(val) => val.get_type(),
             Object::Func(_, _, _) => String::from("FUNCTION"),
             Object::Error(_) => String::from("ERROR"),
@@ -32,6 +34,7 @@ impl fmt::Display for Object {
         match self {
             Object::Int(num) => write!(f, "{}", num),
             Object::Bool(boolean) => write!(f, "{}", boolean),
+            Object::String(string) => write!(f, "\"{}\"", string),
             Object::ReturnValue(val) => write!(f, "{}", *val),
             Object::Func(params, body, _) => {
                 write!(f, "fn({}) {{\n{}\n}}", params.join(", "), body)
