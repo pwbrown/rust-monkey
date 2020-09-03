@@ -76,7 +76,20 @@ impl Evaluator {
             Expr::Ident(name) => self.eval_identifier(&name),
             Expr::Func(params, body) => Object::Func(params, body, Rc::clone(&self.env)),
             Expr::Call(func, args) => self.eval_call_expr(*func, args),
+            Expr::Index(arr, index) => self.eval_index_expr(*arr, *index),
         }
+    }
+
+    fn eval_exprs(&self, exprs: Vec<Expr>) -> (Vec<Object>, Option<Object>) {
+        let mut objects = vec![];
+        for expr in exprs {
+            let obj = self.eval_expr(expr);
+            if let Object::Error(msg) = obj {
+                return (objects, Some(Object::Error(msg)));
+            }
+            objects.push(obj);
+        }
+        (objects, None)
     }
 
     fn eval_literal(&self, literal: Literal) -> Object {
@@ -84,8 +97,16 @@ impl Evaluator {
             Literal::Int(int) => Object::Int(int),
             Literal::Bool(boolean) => Object::Bool(boolean),
             Literal::String(string) => Object::String(string),
-            _ => Object::Undefined,
+            Literal::Array(elements) => self.eval_array_literal(elements),
         }
+    }
+
+    fn eval_array_literal(&self, elements: Vec<Expr>) -> Object {
+        let (elements, err) = self.eval_exprs(elements);
+        if let Some(err) = err {
+            return err;
+        }
+        Object::Array(elements)
     }
 
     fn eval_prefix_expr(&self, operator: Prefix, right: Object) -> Object {
@@ -213,12 +234,9 @@ impl Evaluator {
 
     fn eval_call_expr(&self, func: Expr, args: Vec<Expr>) -> Object {
         // Evaluate arguments
-        let args = args
-            .iter()
-            .map(|expr| self.eval_expr(expr.clone()))
-            .collect::<Vec<_>>();
-        if args.len() == 1 && self.is_error(&args[0]) {
-            return args[0].clone();
+        let (args, err) = self.eval_exprs(args);
+        if let Some(err) = err {
+            return err;
         }
 
         // Evaluate function
@@ -246,6 +264,43 @@ impl Evaluator {
         let result = evaluator.eval(body);
 
         result
+    }
+
+    fn eval_index_expr(&self, left: Expr, index: Expr) -> Object {
+        let left = self.eval_expr(left);
+        if self.is_error(&left) {
+            return left;
+        }
+        let index = self.eval_expr(index);
+        if self.is_error(&index) {
+            return index;
+        }
+        match left {
+            Object::Array(elements) => self.eval_array_index_expr(elements, index),
+            _ => Object::Error(format!(
+                "index operator not supported for {}",
+                left.get_type()
+            )),
+        }
+    }
+
+    fn eval_array_index_expr(&self, arr: Vec<Object>, index: Object) -> Object {
+        let index = match index {
+            Object::Int(int) => int,
+            obj => {
+                return Object::Error(format!(
+                    "expected array index to be of type INT, but got {}",
+                    obj.get_type()
+                ))
+            }
+        };
+        if index < 0 || index >= arr.len() as i64 {
+            return Object::Undefined;
+        }
+        match arr.get(index as usize) {
+            Some(obj) => obj.clone(),
+            None => Object::Undefined,
+        }
     }
 
     fn is_truthy(&self, obj: Object) -> bool {

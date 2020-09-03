@@ -50,6 +50,7 @@ pub enum Expr {
     If(Box<Expr>, BlockStmt, Option<BlockStmt>), // if (5 < 10) { true } else { false }
     Func(Vec<String>, BlockStmt),                // fn(x, y) { return x + y; }
     Call(Box<Expr>, Vec<Expr>),                  // add(1, 2)
+    Index(Box<Expr>, Box<Expr>),                 // myArray[2 + 1]
 }
 
 impl fmt::Display for Expr {
@@ -71,6 +72,7 @@ impl fmt::Display for Expr {
                 let str_args: Vec<String> = args.iter().map(|expr| format!("{}", expr)).collect();
                 write!(f, "{}({})", func, str_args.join(", "))
             }
+            Expr::Index(arr, index) => write!(f, "({}[{}])", arr, index),
         }
     }
 }
@@ -178,6 +180,7 @@ pub enum Precedence {
     Product,     // * or /
     Prefix,      // -X or !X
     Call,        // myFunction(X)
+    Index,       // myArray[1]
 }
 
 impl Precedence {
@@ -189,6 +192,7 @@ impl Precedence {
             Token::Plus | Token::Minus => Precedence::Sum,
             Token::Slash | Token::Asterisk => Precedence::Product,
             Token::Lparen => Precedence::Call,
+            Token::Lbracket => Precedence::Index,
             _ => Precedence::Lowest,
         }
     }

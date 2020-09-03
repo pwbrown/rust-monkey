@@ -132,7 +132,7 @@ impl<'a> Parser<'a> {
             Token::Lparen => self.parse_grouped_expr(),
             Token::Lbracket => self.parse_array_literal_expr(),
             Token::If => self.parse_if_expr(),
-            Token::Func => self.parse_function_literal_expression(),
+            Token::Func => self.parse_function_literal_expr(),
             Token::Bang | Token::Minus => self.parse_prefix_expr(),
             _ => {
                 self.no_prefix_parser_error(self.curr_token.clone());
@@ -146,7 +146,11 @@ impl<'a> Parser<'a> {
             left = match self.peek_token {
                 Token::Lparen => {
                     self.bump();
-                    self.parse_call_expression(left.unwrap())
+                    self.parse_call_expr(left.unwrap())
+                }
+                Token::Lbracket => {
+                    self.bump();
+                    self.parse_index_expr(left.unwrap())
                 }
                 _ => {
                     if Infix::from_token(&self.peek_token) != None {
@@ -267,7 +271,7 @@ impl<'a> Parser<'a> {
         Some(Expr::If(Box::new(condition), consequence, alternative))
     }
 
-    fn parse_function_literal_expression(&mut self) -> Option<Expr> {
+    fn parse_function_literal_expr(&mut self) -> Option<Expr> {
         if !self.expect_peek(Token::Lparen) {
             return None;
         }
@@ -318,11 +322,26 @@ impl<'a> Parser<'a> {
         Some(params)
     }
 
-    fn parse_call_expression(&mut self, func: Expr) -> Option<Expr> {
+    fn parse_call_expr(&mut self, func: Expr) -> Option<Expr> {
         match self.parse_expr_list(Token::Rparen) {
             Some(args) => Some(Expr::Call(Box::new(func), args)),
             None => None,
         }
+    }
+
+    fn parse_index_expr(&mut self, arr: Expr) -> Option<Expr> {
+        self.bump();
+
+        let index = match self.parse_expr(Precedence::Lowest) {
+            Some(expr) => expr,
+            None => return None,
+        };
+
+        if !self.expect_peek(Token::Rbracket) {
+            return None;
+        }
+
+        Some(Expr::Index(Box::new(arr), Box::new(index)))
     }
 
     fn parse_array_literal_expr(&mut self) -> Option<Expr> {

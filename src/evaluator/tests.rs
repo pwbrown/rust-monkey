@@ -49,6 +49,41 @@ fn test_eval_string_literal_expression() {
 }
 
 #[test]
+fn test_eval_array_literal_expression() {
+    let input = "[1, 2 * 2, 3 + 3]";
+    assert_eq!(
+        eval(input),
+        Object::Array(vec![Object::Int(1), Object::Int(4), Object::Int(6)])
+    );
+}
+
+#[test]
+fn test_eval_array_index_expressions() {
+    let tests = vec![
+        ("[1, 2, 3][0]", Object::Int(1)),
+        ("[1, 2, 3][1]", Object::Int(2)),
+        ("[1, 2, 3][2]", Object::Int(3)),
+        ("let i = 0; [1][i];", Object::Int(1)),
+        ("[1, 2, 3][1 + 1];", Object::Int(3)),
+        ("let myArray = [1, 2, 3]; myArray[2];", Object::Int(3)),
+        (
+            "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+            Object::Int(6),
+        ),
+        (
+            "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+            Object::Int(2),
+        ),
+        ("[1, 2, 3][3]", Object::Undefined),
+        ("[1, 2, 3][-1]", Object::Undefined),
+    ];
+
+    for (input, result) in tests {
+        assert_eq!(eval(input), result);
+    }
+}
+
+#[test]
 fn test_eval_string_concatenation() {
     let input = "\"Hello\" + \" \" + \"World!\"";
     assert_eq!(eval(input), Object::String(String::from("Hello World!")));

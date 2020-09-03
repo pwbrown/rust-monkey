@@ -562,6 +562,64 @@ fn test_operator_precedence_parsing() {
                 )],
             )),
         ),
+        // Adding Array Literal and Index Expression parsing
+        (
+            "a * [1, 2, 3, 4][b * c] * d",
+            "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+            Stmt::Expr(Expr::Infix(
+                Box::new(Expr::Infix(
+                    Box::new(Expr::Ident(String::from("a"))),
+                    Infix::Multiply,
+                    Box::new(Expr::Index(
+                        Box::new(Expr::Literal(Literal::Array(vec![
+                            Expr::Literal(Literal::Int(1)),
+                            Expr::Literal(Literal::Int(2)),
+                            Expr::Literal(Literal::Int(3)),
+                            Expr::Literal(Literal::Int(4)),
+                        ]))),
+                        Box::new(Expr::Infix(
+                            Box::new(Expr::Ident(String::from("b"))),
+                            Infix::Multiply,
+                            Box::new(Expr::Ident(String::from("c"))),
+                        )),
+                    )),
+                )),
+                Infix::Multiply,
+                Box::new(Expr::Ident(String::from("d"))),
+            )),
+        ),
+        (
+            "add(a * b[2], b[1], 2 * [1, 2][1])",
+            "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+            Stmt::Expr(Expr::Call(
+                Box::new(Expr::Ident(String::from("add"))),
+                vec![
+                    Expr::Infix(
+                        Box::new(Expr::Ident(String::from("a"))),
+                        Infix::Multiply,
+                        Box::new(Expr::Index(
+                            Box::new(Expr::Ident(String::from("b"))),
+                            Box::new(Expr::Literal(Literal::Int(2))),
+                        )),
+                    ),
+                    Expr::Index(
+                        Box::new(Expr::Ident(String::from("b"))),
+                        Box::new(Expr::Literal(Literal::Int(1))),
+                    ),
+                    Expr::Infix(
+                        Box::new(Expr::Literal(Literal::Int(2))),
+                        Infix::Multiply,
+                        Box::new(Expr::Index(
+                            Box::new(Expr::Literal(Literal::Array(vec![
+                                Expr::Literal(Literal::Int(1)),
+                                Expr::Literal(Literal::Int(2)),
+                            ]))),
+                            Box::new(Expr::Literal(Literal::Int(1))),
+                        )),
+                    ),
+                ],
+            )),
+        ),
     ];
 
     for (input, exp_str, exp_ast) in tests {
@@ -677,10 +735,10 @@ fn test_call_expression_parsing() {
 
 #[test]
 fn test_array_literal_parsing() {
-    let input = "[1, 2 * 2, 3 + 3]";
+    let program = parse_program("[1, 2 * 2, 3 + 3]");
 
     assert_eq!(
-        parse_program(input).0,
+        program.0,
         vec![Stmt::Expr(Expr::Literal(Literal::Array(vec![
             Expr::Literal(Literal::Int(1)),
             Expr::Infix(
@@ -694,5 +752,22 @@ fn test_array_literal_parsing() {
                 Box::new(Expr::Literal(Literal::Int(3)))
             ),
         ])))],
+    );
+}
+
+#[test]
+fn test_parsing_index_expressions() {
+    let program = parse_program("myArray[1 + 1]");
+
+    assert_eq!(
+        program.0,
+        vec![Stmt::Expr(Expr::Index(
+            Box::new(Expr::Ident(String::from("myArray"))),
+            Box::new(Expr::Infix(
+                Box::new(Expr::Literal(Literal::Int(1))),
+                Infix::Plus,
+                Box::new(Expr::Literal(Literal::Int(1)))
+            ))
+        ))]
     );
 }
