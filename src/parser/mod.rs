@@ -130,6 +130,7 @@ impl<'a> Parser<'a> {
             Token::Bool(_) => self.parse_boolean_literal_expr(),
             Token::String(_) => self.parse_string_literal_expr(),
             Token::Lparen => self.parse_grouped_expr(),
+            Token::Lbracket => self.parse_array_literal_expr(),
             Token::If => self.parse_if_expr(),
             Token::Func => self.parse_function_literal_expression(),
             Token::Bang | Token::Minus => self.parse_prefix_expr(),
@@ -318,25 +319,32 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_call_expression(&mut self, func: Expr) -> Option<Expr> {
-        match self.parse_call_arguments() {
+        match self.parse_expr_list(Token::Rparen) {
             Some(args) => Some(Expr::Call(Box::new(func), args)),
             None => None,
         }
     }
 
-    fn parse_call_arguments(&mut self) -> Option<Vec<Expr>> {
-        let mut args = Vec::new();
+    fn parse_array_literal_expr(&mut self) -> Option<Expr> {
+        match self.parse_expr_list(Token::Rbracket) {
+            Some(list) => Some(Expr::Literal(Literal::Array(list))),
+            None => None,
+        }
+    }
 
-        if self.peek_token == Token::Rparen {
+    fn parse_expr_list(&mut self, end: Token) -> Option<Vec<Expr>> {
+        let mut list = vec![];
+
+        if self.peek_token == end {
             self.bump();
-            return Some(args);
+            return Some(list);
         }
 
         self.bump();
 
         loop {
             match self.parse_expr(Precedence::Lowest) {
-                Some(expr) => args.push(expr),
+                Some(expr) => list.push(expr),
                 None => return None,
             }
             if self.peek_token != Token::Comma {
@@ -346,10 +354,11 @@ impl<'a> Parser<'a> {
             self.bump();
         }
 
-        if !self.expect_peek(Token::Rparen) {
+        if !self.expect_peek(end) {
             return None;
         }
-        Some(args)
+
+        Some(list)
     }
 
     // Iterates the current and peek tokens

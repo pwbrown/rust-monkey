@@ -674,3 +674,25 @@ fn test_call_expression_parsing() {
         ))],
     )
 }
+
+#[test]
+fn test_array_literal_parsing() {
+    let input = "[1, 2 * 2, 3 + 3]";
+
+    assert_eq!(
+        parse_program(input).0,
+        vec![Stmt::Expr(Expr::Literal(Literal::Array(vec![
+            Expr::Literal(Literal::Int(1)),
+            Expr::Infix(
+                Box::new(Expr::Literal(Literal::Int(2))),
+                Infix::Multiply,
+                Box::new(Expr::Literal(Literal::Int(2)))
+            ),
+            Expr::Infix(
+                Box::new(Expr::Literal(Literal::Int(3))),
+                Infix::Plus,
+                Box::new(Expr::Literal(Literal::Int(3)))
+            ),
+        ])))],
+    );
+}

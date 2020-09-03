@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+pub mod builtins;
 pub mod env;
 pub mod object;
 
@@ -83,6 +84,7 @@ impl Evaluator {
             Literal::Int(int) => Object::Int(int),
             Literal::Bool(boolean) => Object::Bool(boolean),
             Literal::String(string) => Object::String(string),
+            _ => Object::Undefined,
         }
     }
 
@@ -198,19 +200,18 @@ impl Evaluator {
     }
 
     fn eval_identifier(&self, name: &str) -> Object {
-        match self.env.borrow_mut().get(String::from(name)) {
-            Some(value) => value,
-            None => Object::Error(format!("identifier not found: {}", name)),
+        // Check environment for variable names
+        if let Some(value) = self.env.borrow_mut().get(String::from(name)) {
+            return value;
         }
+        // Check builtin functions
+        if let Some(builtin) = builtins::get_builtin(name) {
+            return builtin;
+        }
+        Object::Error(format!("identifier not found: {}", name))
     }
 
     fn eval_call_expr(&self, func: Expr, args: Vec<Expr>) -> Object {
-        // Evaluate function
-        let (params, body, env) = match self.eval_expr(func) {
-            Object::Func(params, body, env) => (params, body, env),
-            Object::Error(msg) => return Object::Error(msg),
-            _ => return Object::Undefined,
-        };
         // Evaluate arguments
         let args = args
             .iter()
@@ -219,6 +220,14 @@ impl Evaluator {
         if args.len() == 1 && self.is_error(&args[0]) {
             return args[0].clone();
         }
+
+        // Evaluate function
+        let (params, body, env) = match self.eval_expr(func) {
+            Object::Func(params, body, env) => (params, body, env),
+            Object::Builtin(func) => return func(args),
+            Object::Error(msg) => return Object::Error(msg),
+            _ => return Object::Undefined,
+        };
         if params.len() != args.len() {
             return Object::Error(format!(
                 "wrong number of arguments: {} expected but got {}",

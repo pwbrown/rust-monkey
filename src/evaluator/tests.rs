@@ -262,3 +262,26 @@ fn test_closures() {
 
     assert_eq!(eval(input), Object::Int(4));
 }
+
+#[test]
+fn test_builtin_functions() {
+    let tests = vec![
+        ("len(\"\")", Object::Int(0)),
+        ("len(\"four\")", Object::Int(4)),
+        ("len(\"hello world\")", Object::Int(11)),
+        (
+            "len(1)",
+            Object::Error(String::from("argument to `len` not supported, got INTEGER")),
+        ),
+        (
+            "len(\"one\", \"two\")",
+            Object::Error(String::from(
+                "wrong number of arguments: 1 expected but got 2",
+            )),
+        ),
+    ];
+
+    for (input, result) in tests {
+        assert_eq!(eval(input), result);
+    }
+}

@@ -28,6 +28,8 @@ impl<'a> Lexer<'a> {
             '*' => Token::Asterisk,
             '{' => Token::Lbrace,
             '}' => Token::Rbrace,
+            '[' => Token::Lbracket,
+            ']' => Token::Rbracket,
             '>' => Token::Gt,
             '<' => Token::Lt,
             '=' => self.if_peek('=', Token::Eq, Token::Assign),

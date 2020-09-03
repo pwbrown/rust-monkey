@@ -81,6 +81,7 @@ pub enum Literal {
     Int(i64),
     Bool(bool),
     String(String),
+    Array(Vec<Expr>),
 }
 
 impl fmt::Display for Literal {
@@ -89,6 +90,10 @@ impl fmt::Display for Literal {
             Literal::Int(num) => write!(f, "{}", num),
             Literal::Bool(boolean) => write!(f, "{}", boolean),
             Literal::String(string) => write!(f, "\"{}\"", string),
+            Literal::Array(exprs) => {
+                let items: Vec<String> = exprs.iter().map(|expr| format!("{}", expr)).collect();
+                write!(f, "[{}]", items.join(", "))
+            }
         }
     }
 }
