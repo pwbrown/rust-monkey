@@ -131,6 +131,7 @@ impl<'a> Parser<'a> {
             Token::String(_) => self.parse_string_literal_expr(),
             Token::Lparen => self.parse_grouped_expr(),
             Token::Lbracket => self.parse_array_literal_expr(),
+            Token::Lbrace => self.parse_hash_literal_expr(),
             Token::If => self.parse_if_expr(),
             Token::Func => self.parse_function_literal_expr(),
             Token::Bang | Token::Minus => self.parse_prefix_expr(),
@@ -349,6 +350,36 @@ impl<'a> Parser<'a> {
             Some(list) => Some(Expr::Literal(Literal::Array(list))),
             None => None,
         }
+    }
+
+    fn parse_hash_literal_expr(&mut self) -> Option<Expr> {
+        let mut pairs = vec![];
+
+        while self.peek_token != Token::Rbrace {
+            self.bump();
+            let key = match self.parse_expr(Precedence::Lowest) {
+                Some(expr) => expr,
+                None => return None,
+            };
+            if !self.expect_peek(Token::Colon) {
+                return None;
+            }
+            self.bump();
+            let val = match self.parse_expr(Precedence::Lowest) {
+                Some(expr) => expr,
+                None => return None,
+            };
+            pairs.push((key, val));
+            if self.peek_token != Token::Rbrace && !self.expect_peek(Token::Comma) {
+                return None;
+            }
+        }
+
+        if !self.expect_peek(Token::Rbrace) {
+            return None;
+        }
+
+        Some(Expr::Literal(Literal::Hash(pairs)))
     }
 
     fn parse_expr_list(&mut self, end: Token) -> Option<Vec<Expr>> {

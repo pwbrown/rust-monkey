@@ -19,6 +19,7 @@ impl<'a> Lexer<'a> {
 
         let tok = match self.curr() {
             ';' => Token::Semicolon,
+            ':' => Token::Colon,
             '(' => Token::Lparen,
             ')' => Token::Rparen,
             ',' => Token::Comma,

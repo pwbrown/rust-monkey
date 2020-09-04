@@ -9,6 +9,7 @@ use crate::ast::*;
 use crate::evaluator::env::*;
 use crate::evaluator::object::*;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Evaluator {
@@ -98,6 +99,7 @@ impl Evaluator {
             Literal::Bool(boolean) => Object::Bool(boolean),
             Literal::String(string) => Object::String(string),
             Literal::Array(elements) => self.eval_array_literal(elements),
+            Literal::Hash(pairs) => self.eval_hash_literal(pairs),
         }
     }
 
@@ -107,6 +109,24 @@ impl Evaluator {
             return err;
         }
         Object::Array(elements)
+    }
+
+    fn eval_hash_literal(&self, pairs: Vec<(Expr, Expr)>) -> Object {
+        let mut map = HashMap::new();
+
+        for (key, val) in pairs {
+            let key = self.eval_expr(key);
+            if self.is_error(&key) {
+                return key;
+            }
+            let val = self.eval_expr(val);
+            if self.is_error(&val) {
+                return val;
+            }
+            map.insert(key, val);
+        }
+
+        Object::Hash(map)
     }
 
     fn eval_prefix_expr(&self, operator: Prefix, right: Object) -> Object {

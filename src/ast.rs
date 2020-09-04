@@ -80,10 +80,11 @@ impl fmt::Display for Expr {
 // ************************** LITERAL **********************
 #[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
-    Int(i64),
-    Bool(bool),
-    String(String),
-    Array(Vec<Expr>),
+    Int(i64),                // 1
+    Bool(bool),              // true
+    String(String),          // "foobar"
+    Array(Vec<Expr>),        // [1, 2, 3]
+    Hash(Vec<(Expr, Expr)>), // { "foo": "bar" }
 }
 
 impl fmt::Display for Literal {
@@ -95,6 +96,11 @@ impl fmt::Display for Literal {
             Literal::Array(exprs) => {
                 let items: Vec<String> = exprs.iter().map(|expr| format!("{}", expr)).collect();
                 write!(f, "[{}]", items.join(", "))
+            }
+            Literal::Hash(pairs) => {
+                let pairs: Vec<String> =
+                    pairs.iter().map(|(k, v)| format!("{}: {}", k, v)).collect();
+                write!(f, "{{{}}}", pairs.join(", "))
             }
         }
     }

@@ -320,3 +320,34 @@ fn test_builtin_functions() {
         assert_eq!(eval(input), result);
     }
 }
+
+#[test]
+fn test_hash_literals() {
+    let input = "
+        let two = \"two\";
+        {
+            \"one\": 10 - 9,
+            two: 1 + 1,
+            \"thr\" + \"ee\": 6/ 2,
+            4: 4,
+            true: 5,
+            false: 6
+        }
+    ";
+
+    assert_eq!(
+        eval(input),
+        Object::Hash(
+            vec![
+                (Object::String(String::from("one")), Object::Int(1)),
+                (Object::String(String::from("two")), Object::Int(2)),
+                (Object::String(String::from("three")), Object::Int(3)),
+                (Object::Int(4), Object::Int(4)),
+                (Object::Bool(true), Object::Int(5)),
+                (Object::Bool(false), Object::Int(6)),
+            ]
+            .into_iter()
+            .collect()
+        ),
+    );
+}

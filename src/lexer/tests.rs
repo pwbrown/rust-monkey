@@ -26,6 +26,7 @@ fn test_next_token() {
         \"foobar\";
         \"foo bar\";
         [1, 2];
+        {\"foo\": \"bar\"}
     ";
 
     let tests = vec![
@@ -130,6 +131,12 @@ fn test_next_token() {
         Token::Int(2),
         Token::Rbracket,
         Token::Semicolon,
+        // {\"foo\": \"bar\"}
+        Token::Lbrace,
+        Token::String(String::from("foo")),
+        Token::Colon,
+        Token::String(String::from("bar")),
+        Token::Rbrace,
         // END
         Token::Eof,
     ];

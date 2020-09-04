@@ -771,3 +771,71 @@ fn test_parsing_index_expressions() {
         ))]
     );
 }
+
+#[test]
+fn test_parsing_hash_literals_string_keys() {
+    let program = parse_program("{ \"one\": 1, \"two\": 2, \"three\": 3 }");
+
+    assert_eq!(
+        program.0,
+        vec![Stmt::Expr(Expr::Literal(Literal::Hash(vec![
+            (
+                Expr::Literal(Literal::String(String::from("one"))),
+                Expr::Literal(Literal::Int(1))
+            ),
+            (
+                Expr::Literal(Literal::String(String::from("two"))),
+                Expr::Literal(Literal::Int(2))
+            ),
+            (
+                Expr::Literal(Literal::String(String::from("three"))),
+                Expr::Literal(Literal::Int(3))
+            )
+        ])))],
+    );
+}
+
+#[test]
+fn test_parsing_empty_hash_literal() {
+    let program = parse_program("{}");
+
+    assert_eq!(
+        program.0,
+        vec![Stmt::Expr(Expr::Literal(Literal::Hash(vec![])))],
+    );
+}
+
+#[test]
+fn test_parsing_hash_literals_with_expressions() {
+    let program = parse_program("{ \"one\": 0 + 1, \"two\": 10 - 8, \"three\": 15 / 5 }");
+
+    assert_eq!(
+        program.0,
+        vec![Stmt::Expr(Expr::Literal(Literal::Hash(vec![
+            (
+                Expr::Literal(Literal::String(String::from("one"))),
+                Expr::Infix(
+                    Box::new(Expr::Literal(Literal::Int(0))),
+                    Infix::Plus,
+                    Box::new(Expr::Literal(Literal::Int(1)))
+                ),
+            ),
+            (
+                Expr::Literal(Literal::String(String::from("two"))),
+                Expr::Infix(
+                    Box::new(Expr::Literal(Literal::Int(10))),
+                    Infix::Minus,
+                    Box::new(Expr::Literal(Literal::Int(8)))
+                ),
+            ),
+            (
+                Expr::Literal(Literal::String(String::from("three"))),
+                Expr::Infix(
+                    Box::new(Expr::Literal(Literal::Int(15))),
+                    Infix::Divide,
+                    Box::new(Expr::Literal(Literal::Int(5)))
+                ),
+            )
+        ])))],
+    );
+}
