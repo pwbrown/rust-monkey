@@ -351,3 +351,20 @@ fn test_hash_literals() {
         ),
     );
 }
+
+#[test]
+fn test_hash_index_expr() {
+    let tests = vec![
+        ("{\"foo\": 5}[\"foo\"]", Object::Int(5)),
+        ("{\"foo\": 5}[\"bar\"]", Object::Undefined),
+        ("let key = \"foo\"; {\"foo\": 5}[key]", Object::Int(5)),
+        ("{}[\"foo\"]", Object::Undefined),
+        ("{5: 5}[5]", Object::Int(5)),
+        ("{true: 5}[true]", Object::Int(5)),
+        ("{false: 5}[false]", Object::Int(5)),
+    ];
+
+    for (input, result) in tests {
+        assert_eq!(eval(input), result);
+    }
+}

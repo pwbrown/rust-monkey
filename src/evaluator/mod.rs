@@ -287,19 +287,16 @@ impl Evaluator {
     }
 
     fn eval_index_expr(&self, left: Expr, index: Expr) -> Object {
-        let left = self.eval_expr(left);
-        if self.is_error(&left) {
-            return left;
-        }
         let index = self.eval_expr(index);
         if self.is_error(&index) {
             return index;
         }
-        match left {
+        match self.eval_expr(left) {
             Object::Array(elements) => self.eval_array_index_expr(elements, index),
-            _ => Object::Error(format!(
+            Object::Hash(hash) => self.eval_hash_index_expr(hash, index),
+            obj => Object::Error(format!(
                 "index operator not supported for {}",
-                left.get_type()
+                obj.get_type()
             )),
         }
     }
@@ -319,6 +316,13 @@ impl Evaluator {
         }
         match arr.get(index as usize) {
             Some(obj) => obj.clone(),
+            None => Object::Undefined,
+        }
+    }
+
+    fn eval_hash_index_expr(&self, hash: HashMap<Object, Object>, key: Object) -> Object {
+        match hash.get(&key) {
+            Some(val) => val.clone(),
             None => Object::Undefined,
         }
     }

@@ -7,6 +7,7 @@ pub fn get_builtin(name: &str) -> Option<Object> {
         "last" => Some(Object::Builtin(last)),
         "rest" => Some(Object::Builtin(rest)),
         "push" => Some(Object::Builtin(push)),
+        "puts" => Some(Object::Builtin(puts)),
         _ => None,
     }
 }
@@ -81,6 +82,14 @@ fn push(args: Vec<Object>) -> Object {
         }
         obj => arg_type_error("push", obj),
     }
+}
+
+// Writes the result of all provided arguments to new lines of STDOUT
+fn puts(args: Vec<Object>) -> Object {
+    for arg in args {
+        println!("{}", arg);
+    }
+    Object::Undefined
 }
 
 // Generates an argument length error if applicable
