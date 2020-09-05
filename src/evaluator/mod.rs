@@ -1,13 +1,10 @@
 #[cfg(test)]
 mod tests;
 
-pub mod builtins;
-pub mod env;
-pub mod object;
+mod builtins;
 
 use crate::ast::*;
-use crate::evaluator::env::*;
-use crate::evaluator::object::*;
+use crate::object::{Env, Object};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;

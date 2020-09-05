@@ -1,8 +1,7 @@
 use crate::ast::*;
-use crate::evaluator::env::Env;
-use crate::evaluator::object::Object;
 use crate::evaluator::Evaluator;
 use crate::lexer::Lexer;
+use crate::object::{Env, Object};
 use crate::parser::Parser;
 use std::cell::RefCell;
 use std::rc::Rc;

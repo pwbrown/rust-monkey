@@ -1,5 +1,7 @@
+pub mod env;
+pub use env::Env;
+
 use crate::ast::BlockStmt;
-use crate::evaluator::env::Env;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;

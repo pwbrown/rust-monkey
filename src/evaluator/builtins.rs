@@ -1,4 +1,4 @@
-use crate::evaluator::object::Object;
+use crate::object::Object;
 
 pub fn get_builtin(name: &str) -> Option<Object> {
     match name {

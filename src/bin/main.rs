@@ -1,6 +1,6 @@
-use monkey::evaluator::env::Env;
 use monkey::evaluator::Evaluator;
 use monkey::lexer::Lexer;
+use monkey::object::Env;
 use monkey::parser::Parser;
 use std::cell::RefCell;
 use std::io;
